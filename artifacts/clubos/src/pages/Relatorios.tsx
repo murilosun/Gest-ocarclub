@@ -105,7 +105,7 @@ export function Relatorios({ orders, clients, products, financial, services }: R
                 contentStyle={{ background: "#202022", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: any) => [money(v), ""]}
               />
-              <Bar dataKey="value" fill={PALETTE.accent} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" fill="#FF6A00" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

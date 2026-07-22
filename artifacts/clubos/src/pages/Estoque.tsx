@@ -8,6 +8,8 @@ import { Field } from "@/components/shared/Field";
 import { Badge } from "@/components/shared/Badge";
 import { money, uid, PALETTE } from "@/lib/utils";
 
+const INPUT = "w-full h-10 px-3 rounded-[10px] bg-secondary border border-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50";
+
 interface EstoqueProps {
   products: any[];
   setProducts: (updater: any[] | ((prev: any[]) => any[])) => void;
@@ -117,22 +119,50 @@ export function Estoque({ products, setProducts }: EstoqueProps) {
           footer={<PrimaryButton onClick={save}>{modal === "new" ? "Salvar produto" : "Salvar alterações"}</PrimaryButton>}
         >
           <Field label="Nome do produto">
-            <input className="w-full" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            <input
+              className={INPUT}
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+              placeholder="Ex: Shampoo automotivo"
+            />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Quantidade atual">
-              <input type="number" className="w-full" value={form.qty} onChange={e => setForm({ ...form, qty: e.target.value })} />
+              <input
+                type="number"
+                className={INPUT}
+                value={form.qty}
+                onChange={e => setForm({ ...form, qty: e.target.value })}
+                placeholder="0"
+              />
             </Field>
             <Field label="Estoque mínimo">
-              <input type="number" className="w-full" value={form.min} onChange={e => setForm({ ...form, min: e.target.value })} />
+              <input
+                type="number"
+                className={INPUT}
+                value={form.min}
+                onChange={e => setForm({ ...form, min: e.target.value })}
+                placeholder="0"
+              />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Valor de compra (R$)">
-              <input type="number" className="w-full" value={form.unitCost} onChange={e => setForm({ ...form, unitCost: e.target.value })} />
+              <input
+                type="number"
+                className={INPUT}
+                value={form.unitCost}
+                onChange={e => setForm({ ...form, unitCost: e.target.value })}
+                placeholder="0,00"
+              />
             </Field>
             <Field label="Fornecedor">
-              <input className="w-full" value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} />
+              <input
+                className={INPUT}
+                value={form.supplier}
+                onChange={e => setForm({ ...form, supplier: e.target.value })}
+                placeholder="Nome do fornecedor"
+              />
             </Field>
           </div>
         </Modal>

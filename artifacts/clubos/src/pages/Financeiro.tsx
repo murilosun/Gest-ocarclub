@@ -1,14 +1,16 @@
 import { useState, useMemo } from "react";
 import { Plus, TrendingUp, TrendingDown, Wallet, DollarSign, Pencil as PenIcon, Trash2, Check } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PrimaryButton, GhostButton, IconBtn } from "@/components/shared/Buttons";
+import { PrimaryButton, IconBtn } from "@/components/shared/Buttons";
 import { Card } from "@/components/shared/Card";
 import { Modal } from "@/components/shared/Modal";
 import { Field } from "@/components/shared/Field";
-import { Badge } from "@/components/shared/Badge";
 import { KPI } from "@/components/shared/KPI";
 import { money, uid, todayISO, PALETTE } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+const INPUT = "w-full h-10 px-3 rounded-[10px] bg-secondary border border-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50";
+const SELECT = "w-full h-10 px-3 rounded-[10px] bg-secondary border border-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50";
 
 interface FinanceiroProps {
   financial: any[];
@@ -92,7 +94,7 @@ export function Financeiro({ financial, setFinancial, orders }: FinanceiroProps)
                 contentStyle={{ background: "#202022", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: any) => [money(v), ""]}
               />
-              <Bar dataKey="value" fill={PALETTE.accent} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" fill="#FF6A00" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -167,31 +169,59 @@ export function Financeiro({ financial, setFinancial, orders }: FinanceiroProps)
           onClose={() => setModal(null)}
           footer={<PrimaryButton onClick={save}>{modal === "new" ? "Salvar lançamento" : "Salvar alterações"}</PrimaryButton>}
         >
-          <div className="flex gap-2 mb-4 p-1 bg-muted/20 rounded-[11px]">
+          {/* Tipo de lançamento */}
+          <div className="flex gap-2 p-1 bg-muted/20 rounded-[11px]">
             {["entrada", "saida"].map(t => (
               <button
                 key={t}
                 onClick={() => setForm({ ...form, type: t })}
-                className={`flex-1 h-9 rounded-lg font-medium text-sm transition-all ${form.type === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex-1 h-9 rounded-lg font-medium text-sm transition-all ${
+                  form.type === t
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {t === "entrada" ? "Entrada" : "Saída"}
               </button>
             ))}
           </div>
+
           <Field label="Descrição">
-            <input className="w-full" value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} />
+            <input
+              className={INPUT}
+              value={form.desc}
+              onChange={e => setForm({ ...form, desc: e.target.value })}
+              placeholder="Ex: Pagamento de aluguel"
+            />
           </Field>
+
           <div className="grid grid-cols-2 gap-4">
             <Field label="Valor (R$)">
-              <input type="number" className="w-full" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+              <input
+                type="number"
+                className={INPUT}
+                value={form.value}
+                onChange={e => setForm({ ...form, value: e.target.value })}
+                placeholder="0,00"
+              />
             </Field>
             <Field label="Data">
-              <input type="date" className="w-full" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+              <input
+                type="date"
+                className={INPUT}
+                value={form.date}
+                onChange={e => setForm({ ...form, date: e.target.value })}
+              />
             </Field>
           </div>
+
           <Field label="Tipo">
-            <select className="w-full" value={form.kind} onChange={e => setForm({ ...form, kind: e.target.value })}>
-              <option value="avulso">Lançamento avulso</option>
+            <select
+              className={SELECT}
+              value={form.kind}
+              onChange={e => setForm({ ...form, kind: e.target.value })}
+            >
+              <option value="avulso">Lançamento avulso (já efetivado)</option>
               <option value="a_pagar">Conta a pagar</option>
               <option value="a_receber">Conta a receber</option>
             </select>

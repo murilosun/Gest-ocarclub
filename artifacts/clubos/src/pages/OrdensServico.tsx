@@ -71,7 +71,7 @@ export function OrdensServico({ orders, setOrders, clients, services, employees 
       discount: Number(form.discount) || 0,
       tech: form.tech,
       notes: form.notes,
-      status: "Recebido",
+      status: "Em espera",
       createdAt: todayISO(),
     };
     setOrders((prev) => [newOrder, ...prev]);
@@ -377,7 +377,7 @@ export function OrdensServico({ orders, setOrders, clients, services, employees 
                   <GhostButton icon={PenIcon} onClick={() => startEditOS(order)}>
                     Editar OS
                   </GhostButton>
-                  {client?.phone && order.status === "Entregue" && (
+                  {client?.phone && order.status === "Finalizado" && (
                     <GhostButton
                       icon={MessageCircle}
                       onClick={() =>

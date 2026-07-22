@@ -17,22 +17,20 @@ export const PALETTE = {
   danger: "#FF453A",
 };
 
-export const STATUS_FLOW = ["Recebido", "Lavagem", "Polimento", "Vitrificação", "Higienização", "Finalizado", "Entregue"];
+export const STATUS_FLOW = ["Em espera", "Em atendimento", "Finalizado"];
 
 export const APPT_STATUS = ["Agendado", "Confirmado", "Em andamento", "Finalizado", "Cancelado"];
 
 export const STATUS_COLOR: Record<string, string> = {
+  // OS statuses
+  "Em espera": "#9A9AA0",
+  "Em atendimento": "#FF6A00",
+  "Finalizado": "#30D158",
+  // Agenda statuses
   "Agendado": "#9A9AA0",
   "Confirmado": "#30D158",
   "Em andamento": "#FF6A00",
-  "Finalizado": "#3B82F6",
   "Cancelado": "#FF453A",
-  "Entregue": "#30D158",
-  "Recebido": "#9A9AA0",
-  "Lavagem": "#5AC8FA",
-  "Polimento": "#FF6A00",
-  "Vitrificação": "#BF5AF2",
-  "Higienização": "#FFD60A",
 };
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);
