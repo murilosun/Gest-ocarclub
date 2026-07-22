@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 
 type ViewMode = "day" | "week" | "month";
 
-interface Appointment {
+export interface Appointment {
   id: string;
   clientName: string;
   clientId?: string;

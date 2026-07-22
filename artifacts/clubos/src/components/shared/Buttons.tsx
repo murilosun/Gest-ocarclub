@@ -48,7 +48,7 @@ export function GhostButton({ children, icon: Icon, onClick, danger, style, clas
 
 interface IconBtnProps {
   icon: LucideIcon;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   title?: string;
   className?: string;
 }

@@ -32,12 +32,12 @@ function showError(msg: string) {
    No background polling: eliminates the race condition where a concurrent
    fetch would overwrite optimistic state before the POST commits to the DB.
    ========================================================================= */
-export function useApiCollection(
+export function useApiCollection<T = Record<string, unknown>>(
   table: string,
   mapToJs: (row: Record<string, unknown>) => Record<string, unknown>,
   mapToDb: (item: Record<string, unknown>) => Record<string, unknown>,
   _orderBy = "created_at",
-) {
+): readonly [T[], (u: T[] | ((p: T[]) => T[])) => void, boolean] {
   const [data,  setData]  = useState<Record<string, unknown>[]>([]);
   const [ready, setReady] = useState(false);
   const ref = useRef<Record<string, unknown>[]>([]); // current data ref (never stale)
@@ -103,7 +103,7 @@ export function useApiCollection(
     await load();
   }, [table]); // table is constant per hook instance; load/mapToDb captured via closure
 
-  return [data, setSynced, ready] as const;
+  return [data, setSynced, ready] as unknown as readonly [T[], (u: T[] | ((p: T[]) => T[])) => void, boolean];
 }
 
 /* ==========================================================================

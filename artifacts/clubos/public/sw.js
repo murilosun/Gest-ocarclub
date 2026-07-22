@@ -31,8 +31,8 @@ self.addEventListener('fetch', (e) => {
   const { request } = e;
   const url = new URL(request.url);
 
-  // Skip non-GET and Supabase requests (always live)
-  if (request.method !== 'GET' || url.hostname.includes('supabase')) return;
+  // Skip non-GET and API requests (always live)
+  if (request.method !== 'GET' || url.pathname.startsWith('/api')) return;
 
   // Navigation: network-first, fallback to cached index
   if (request.mode === 'navigate') {
