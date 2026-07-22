@@ -1,10 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+// Supabase has been replaced by the Replit built-in database + /api server.
+// This file is kept as a stub so old imports don't crash during the transition.
+// It exports nothing useful — migrate any remaining consumers to apiClient.ts.
 
-export const SUPABASE_URL = "https://fsmcobjzmgqvgbrovzrm.supabase.co";
-export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_GPc-Avp6vA-rgBiIVcV5gQ_4MDOV1iW";
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true },
-});
-
-export const COMPANY_ID = "6ffdf608-cad8-4d35-b6a7-ee329e6737cb";
+export const SUPABASE_URL = "";
+export const SUPABASE_ANON_KEY = "";
+export const COMPANY_ID = "";
+export const supabase = null as never;

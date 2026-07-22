@@ -1,57 +1,60 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "./supabaseClient";
+import { apiGet, apiPost } from "./apiClient";
 
 export function useAuth() {
-  const [session, setSession] = useState<any>(undefined);
-  const [profile, setProfile] = useState<any>(null);
+  // undefined = still loading; null = not logged in; object = logged in
+  const [user, setUser] = useState<null | undefined | Record<string, string>>(undefined);
 
-  const loadProfile = useCallback(async (userId: string | undefined) => {
-    if (!userId) {
-      setProfile(null);
-      return;
+  const loadMe = useCallback(async () => {
+    try {
+      const res = await apiGet("/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
     }
-    const { data } = await supabase.from("app_users").select("*").eq("auth_user_id", userId).maybeSingle();
-    setProfile(data || null);
   }, []);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      loadProfile(data.session?.user?.id);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
-      loadProfile(sess?.user?.id);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [loadProfile]);
+  useEffect(() => { loadMe(); }, [loadMe]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error;
+    const res = await apiPost("/auth/login", { email, password });
+    if (res.ok) {
+      const data = await res.json();
+      setUser(data);
+      return null; // no error
+    }
+    const err = await res.json().catch(() => ({ error: "Erro ao conectar" }));
+    return { message: err.error ?? "Credenciais inválidas" };
   };
 
   const signUp = async (email: string, password: string, name: string, role: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, role },
-        emailRedirectTo: window.location.origin,
-      },
-    });
-    return { error, needsConfirmation: !error && !data.session };
+    const res = await apiPost("/auth/register", { email, password, name, role });
+    if (res.ok) {
+      const data = await res.json();
+      setUser(data);
+      return { error: null, needsConfirmation: false };
+    }
+    const err = await res.json().catch(() => ({ error: "Erro ao criar conta" }));
+    return { error: { message: err.error ?? "Erro ao criar conta" }, needsConfirmation: false };
   };
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    await apiPost("/auth/logout", {});
+    setUser(null);
+  };
 
   return {
-    session,
-    profile,
-    loading: session === undefined,
+    session: user,          // truthy when logged in (keeps same interface as before)
+    profile: user ?? null,  // same object — has name, role, email, companyId
+    loading: user === undefined,
     signIn,
     signUp,
     signOut,
-    reloadProfile: () => loadProfile(session?.user?.id),
+    reloadProfile: loadMe,
   };
 }

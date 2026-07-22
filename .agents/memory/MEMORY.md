@@ -1,0 +1,1 @@
+- [ClubOS DB Migration](clubos-db-migration.md) — Supabase replaced by Replit PostgreSQL + Express sessions; full arch, routes, and mapper details here.

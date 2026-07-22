@@ -6,7 +6,7 @@ import { Card } from "@/components/shared/Card";
 import { Field } from "@/components/shared/Field";
 import { Avatar } from "@/components/shared/Avatar";
 import { Badge } from "@/components/shared/Badge";
-import { supabase, COMPANY_ID } from "@/lib/supabaseClient";
+import { apiJson } from "@/lib/apiClient";
 
 interface ConfiguracoesProps {
   brand: { name: string; suffix: string; mark: string; accent: string };
@@ -19,7 +19,6 @@ interface AppUser {
   name: string;
   email: string;
   role: string;
-  auth_user_id: string;
 }
 
 export function Configuracoes({ brand, user, onSignOut }: ConfiguracoesProps) {
@@ -35,15 +34,10 @@ export function Configuracoes({ brand, user, onSignOut }: ConfiguracoesProps) {
   useEffect(() => {
     if (!isAdmin) return;
     setLoadingUsers(true);
-    supabase
-      .from("app_users")
-      .select("*")
-      .eq("company_id", COMPANY_ID)
-      .order("name")
-      .then(({ data }) => {
-        if (data) setCompanyUsers(data as AppUser[]);
-        setLoadingUsers(false);
-      });
+    apiJson<AppUser[]>("/company/users")
+      .then((data) => { if (data) setCompanyUsers(data); })
+      .catch(() => {})
+      .finally(() => setLoadingUsers(false));
   }, [isAdmin]);
 
   const saveSettings = () => {
@@ -151,7 +145,7 @@ export function Configuracoes({ brand, user, onSignOut }: ConfiguracoesProps) {
             <h3 className="font-semibold text-foreground">Segurança</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Sua conta é gerenciada pelo Supabase Auth. Para redefinir a senha, use a opção de recuperação na tela de login.
+            Para redefinir a senha, entre em contato com o administrador da conta.
           </p>
           <GhostButton danger onClick={onSignOut}>
             Sair da conta
@@ -185,14 +179,13 @@ export function Configuracoes({ brand, user, onSignOut }: ConfiguracoesProps) {
           ) : (
             <div className="divide-y divide-border -my-1">
               {companyUsers.map(u => {
-                const isCurrentUser = u.auth_user_id === undefined || u.name === user?.name;
                 return (
                   <div key={u.id} className="flex items-center gap-4 py-3">
                     <Avatar name={u.name} size={40} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-foreground">{u.name}</span>
-                        {isCurrentUser && (
+                        {u.email === user?.email && (
                           <span className="text-xs text-primary font-medium">(você)</span>
                         )}
                       </div>

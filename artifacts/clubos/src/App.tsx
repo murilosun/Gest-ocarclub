@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Route, Switch } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { supabase, COMPANY_ID } from "@/lib/supabaseClient";
+import { apiJson } from "@/lib/apiClient";
 import {
-  useSupabaseCollection,
+  useApiCollection,
   useClientsWithVehicles,
   ordersMap,
   appointmentsMap,
@@ -28,7 +28,7 @@ import { Relatorios } from "@/pages/Relatorios";
 import { Configuracoes } from "@/pages/Configuracoes";
 import { useLocation } from "wouter";
 
-/* ── DB error toast ─────────────────────────────────────── */
+/* ── DB error toast ──────────────────────────────────────────── */
 function DbErrorToast() {
   const [msg, setMsg] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,10 +36,7 @@ function DbErrorToast() {
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      const text = detail?.message?.includes("column")
-        ? `Coluna não encontrada no banco ("${detail.table}"). Verifique o schema no Supabase.`
-        : `Erro ao salvar (${detail?.table}): ${detail?.message}`;
-      setMsg(text);
+      setMsg(detail?.message ?? "Erro ao salvar");
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setMsg(null), 6000);
     };
@@ -48,7 +45,6 @@ function DbErrorToast() {
   }, []);
 
   if (!msg) return null;
-
   return (
     <div
       style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, maxWidth: 480, width: "calc(100% - 48px)" }}
@@ -62,50 +58,26 @@ function DbErrorToast() {
   );
 }
 
-export default function App() {
-  const auth = useAuth();
+/* ── Authenticated shell — hooks only mount after login ──────── */
+function AuthenticatedApp({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [, setLocation] = useLocation();
   const [brand, setBrand] = useState(DEFAULT_BRAND);
 
-  const [orders, setOrders, ordersReady] = useSupabaseCollection("orders", ordersMap.toJs, ordersMap.toDb, "created_at");
-  const [appointments, setAppointments, appointmentsReady] = useSupabaseCollection("appointments", appointmentsMap.toJs, appointmentsMap.toDb, "date");
-  const [services, setServices, servicesReady] = useSupabaseCollection("services", servicesMap.toJs, servicesMap.toDb, "created_at");
-  const [products, setProducts, productsReady] = useSupabaseCollection("products", productsMap.toJs, productsMap.toDb, "created_at");
-  const [employees, setEmployees, employeesReady] = useSupabaseCollection("employees", employeesMap.toJs, employeesMap.toDb, "created_at");
-  const [financial, setFinancial, financialReady] = useSupabaseCollection("financial", financialMap.toJs, financialMap.toDb, "date");
-  const [clients, setClients, clientsReady] = useClientsWithVehicles();
+  const [orders,       setOrders,       ordersReady]       = useApiCollection("orders",       ordersMap.toJs,       ordersMap.toDb);
+  const [appointments, setAppointments, appointmentsReady] = useApiCollection("appointments", appointmentsMap.toJs, appointmentsMap.toDb);
+  const [services,     setServices,     servicesReady]     = useApiCollection("services",     servicesMap.toJs,     servicesMap.toDb);
+  const [products,     setProducts,     productsReady]     = useApiCollection("products",     productsMap.toJs,     productsMap.toDb);
+  const [employees,    setEmployees,    employeesReady]    = useApiCollection("employees",    employeesMap.toJs,    employeesMap.toDb);
+  const [financial,    setFinancial,    financialReady]    = useApiCollection("financial",    financialMap.toJs,    financialMap.toDb);
+  const [clients,      setClients,      clientsReady]      = useClientsWithVehicles();
 
   useEffect(() => {
-    supabase
-      .from("companies")
-      .select("*")
-      .eq("id", COMPANY_ID)
-      .single()
-      .then(({ data }) => {
-        if (data) setBrand({ name: data.name, suffix: data.suffix, mark: data.mark, accent: data.accent });
-      });
+    apiJson<{ name: string; suffix: string; mark: string; accent: string }>("/company")
+      .then((data) => {
+        if (data?.name) setBrand({ name: data.name, suffix: data.suffix, mark: data.mark, accent: data.accent });
+      })
+      .catch(() => {/* keep default */});
   }, []);
-
-  useEffect(() => {
-    if (brand.accent) {
-      document.documentElement.style.setProperty("--primary", `24 100% 50%`);
-    }
-  }, [brand.accent]);
-
-  if (auth.loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!auth.session) {
-    return <Login brand={brand} auth={auth} />;
-  }
 
   const ready = ordersReady && appointmentsReady && servicesReady && productsReady && employeesReady && financialReady && clientsReady;
 
@@ -121,8 +93,6 @@ export default function App() {
   }
 
   return (
-    <>
-    <DbErrorToast />
     <div className="flex min-h-screen bg-background">
       <Sidebar brand={brand} user={auth.profile} onSignOut={() => auth.signOut()} />
       <main className="flex-1 overflow-y-auto">
@@ -192,6 +162,32 @@ export default function App() {
         </Switch>
       </main>
     </div>
+  );
+}
+
+/* ── Root ────────────────────────────────────────────────────── */
+export default function App() {
+  const auth = useAuth();
+
+  if (auth.loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.session) {
+    return <Login brand={DEFAULT_BRAND} auth={auth} />;
+  }
+
+  return (
+    <>
+      <DbErrorToast />
+      <AuthenticatedApp auth={auth} />
     </>
   );
 }
