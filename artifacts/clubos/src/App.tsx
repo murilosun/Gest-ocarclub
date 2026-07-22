@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Route, Switch } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { supabase, COMPANY_ID } from "@/lib/supabaseClient";
@@ -27,6 +27,40 @@ import { Equipe } from "@/pages/Equipe";
 import { Relatorios } from "@/pages/Relatorios";
 import { Configuracoes } from "@/pages/Configuracoes";
 import { useLocation } from "wouter";
+
+/* ── DB error toast ─────────────────────────────────────── */
+function DbErrorToast() {
+  const [msg, setMsg] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const text = detail?.message?.includes("column")
+        ? `Coluna não encontrada no banco ("${detail.table}"). Verifique o schema no Supabase.`
+        : `Erro ao salvar (${detail?.table}): ${detail?.message}`;
+      setMsg(text);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setMsg(null), 6000);
+    };
+    window.addEventListener("clubos:dberror", handler);
+    return () => window.removeEventListener("clubos:dberror", handler);
+  }, []);
+
+  if (!msg) return null;
+
+  return (
+    <div
+      style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 9999, maxWidth: 480, width: "calc(100% - 48px)" }}
+      className="bg-destructive text-white text-sm px-4 py-3 rounded-xl shadow-xl flex items-start gap-3 cursor-pointer"
+      onClick={() => setMsg(null)}
+    >
+      <span className="text-base mt-0.5">⚠️</span>
+      <span className="flex-1">{msg}</span>
+      <span className="opacity-60 text-xs mt-0.5 shrink-0">clique para fechar</span>
+    </div>
+  );
+}
 
 export default function App() {
   const auth = useAuth();
@@ -87,6 +121,8 @@ export default function App() {
   }
 
   return (
+    <>
+    <DbErrorToast />
     <div className="flex min-h-screen bg-background">
       <Sidebar brand={brand} user={auth.profile} onSignOut={() => auth.signOut()} />
       <main className="flex-1 overflow-y-auto">
@@ -123,6 +159,7 @@ export default function App() {
               clients={clients}
               services={services}
               employees={employees}
+              brand={brand}
             />
           </Route>
           <Route path="/financeiro">
@@ -155,5 +192,6 @@ export default function App() {
         </Switch>
       </main>
     </div>
+    </>
   );
 }

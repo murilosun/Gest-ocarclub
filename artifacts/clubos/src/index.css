@@ -229,3 +229,39 @@
     inset: -1px;
   }
 }
+
+/* ── Print styles ──────────────────────────────────────────────────────── */
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* Force color/background rendering even for colored elements */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything, then reveal only the print area */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible !important;
+  }
+
+  .print-only {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+    z-index: 99999;
+  }
+}

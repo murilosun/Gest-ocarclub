@@ -6,13 +6,15 @@ import {
   Trash2,
   MessageCircle,
   Check,
-  Users,
   Car,
   Wrench,
   UserCog,
   DollarSign,
   Clock,
   Pencil as PenIcon,
+  Printer,
+  Receipt,
+  FileText,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PrimaryButton, GhostButton, IconBtn } from "@/components/shared/Buttons";
@@ -21,6 +23,7 @@ import { Modal } from "@/components/shared/Modal";
 import { Field } from "@/components/shared/Field";
 import { Badge } from "@/components/shared/Badge";
 import { Avatar } from "@/components/shared/Avatar";
+import { PrintOS, PrintMode } from "@/components/shared/PrintOS";
 import { STATUS_COLOR, STATUS_FLOW, money, uid, todayISO, waLink } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -30,14 +33,18 @@ interface OrdensServicoProps {
   clients: any[];
   services: any[];
   employees: any[];
+  brand?: { name: string; suffix: string };
 }
 
-export function OrdensServico({ orders, setOrders, clients, services, employees }: OrdensServicoProps) {
+export function OrdensServico({ orders, setOrders, clients, services, employees, brand }: OrdensServicoProps) {
   const [showNew, setShowNew] = useState(false);
   const [openOrder, setOpenOrder] = useState<any>(null);
   const [editingOS, setEditingOS] = useState(false);
   const [eForm, setEForm] = useState<any>({});
   const [dragId, setDragId] = useState<string | null>(null);
+  const [printOrder, setPrintOrder] = useState<any>(null);
+  const [printMode, setPrintMode] = useState<PrintMode>("receipt");
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [form, setForm] = useState({
     clientId: "",
     vehicleId: "",
@@ -121,7 +128,42 @@ export function OrdensServico({ orders, setOrders, clients, services, employees 
     setOpenOrder(null);
   };
 
+  const openPrint = (order: any) => {
+    setPrintOrder(order);
+    setPrintMode("receipt");
+    setShowPrintModal(true);
+  };
+
+  const triggerPrint = (mode: PrintMode) => {
+    setPrintMode(mode);
+    setShowPrintModal(false);
+    // Inject @page size before printing
+    const existing = document.getElementById("clubos-page-style");
+    if (existing) existing.remove();
+    const style = document.createElement("style");
+    style.id = "clubos-page-style";
+    style.textContent = mode === "receipt"
+      ? "@page { size: 80mm auto; margin: 4mm; }"
+      : "@page { size: A4; margin: 15mm 20mm; }";
+    document.head.appendChild(style);
+    // Short delay to let React update the print area before print dialog opens
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => document.getElementById("clubos-page-style")?.remove(), 2000);
+    }, 80);
+  };
+
   return (
+    <>
+    {/* Hidden print area — only visible via @media print */}
+    <PrintOS
+      order={printOrder}
+      client={printOrder ? clients.find((c: any) => c.id === printOrder.clientId) : undefined}
+      mode={printMode}
+      brandName={brand?.name}
+      brandSuffix={brand?.suffix}
+    />
+
     <div className="p-6 space-y-6">
       <PageHeader
         title="Ordens de Serviço"
@@ -377,6 +419,9 @@ export function OrdensServico({ orders, setOrders, clients, services, employees 
                   <GhostButton icon={PenIcon} onClick={() => startEditOS(order)}>
                     Editar OS
                   </GhostButton>
+                  <GhostButton icon={Printer} onClick={() => openPrint(order)}>
+                    Imprimir OS
+                  </GhostButton>
                   {client?.phone && order.status === "Finalizado" && (
                     <GhostButton
                       icon={MessageCircle}
@@ -497,6 +542,45 @@ export function OrdensServico({ orders, setOrders, clients, services, employees 
           </Field>
         </Modal>
       )}
+
+      {/* ── Print Format Modal ─────────────────────────────── */}
+      {showPrintModal && printOrder && (
+        <Modal
+          title="Imprimir OS"
+          onClose={() => setShowPrintModal(false)}
+          width={420}
+        >
+          <p className="text-sm text-muted-foreground mb-6">
+            Escolha o formato de impressão para <b className="text-foreground">{printOrder.code || printOrder.id}</b>.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => triggerPrint("receipt")}
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <Receipt size={36} className="text-muted-foreground group-hover:text-primary transition-colors" />
+              <div className="text-center">
+                <div className="font-semibold text-sm text-foreground">Notinha</div>
+                <div className="text-xs text-muted-foreground mt-1">Impressora térmica · 80mm</div>
+              </div>
+            </button>
+            <button
+              onClick={() => triggerPrint("a4")}
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all group"
+            >
+              <FileText size={36} className="text-muted-foreground group-hover:text-primary transition-colors" />
+              <div className="text-center">
+                <div className="font-semibold text-sm text-foreground">Folha A4</div>
+                <div className="text-xs text-muted-foreground mt-1">Impressora comum · A4</div>
+              </div>
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            O diálogo de impressão do sistema abrirá automaticamente.
+          </p>
+        </Modal>
+      )}
     </div>
+    </>
   );
 }

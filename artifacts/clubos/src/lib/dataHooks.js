@@ -2,6 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, COMPANY_ID } from "../supabaseClient";
 
 /* ==========================================================================
+   notifyError — dispatches a custom DOM event so the UI can show a toast
+   without needing to change the hook's return signature.
+   ========================================================================= */
+function notifyError(table, message) {
+  console.error(`[ClubOS] Erro em "${table}":`, message);
+  window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { table, message } }));
+}
+
+/* ==========================================================================
    useSupabaseCollection
    Mesma "forma" que o restante do app já espera: [dados, setDados, pronto].
    setDados aceita um array novo OU uma função (prev => next), exatamente
@@ -50,27 +59,50 @@ export function useSupabaseCollection(table, mapToJs, mapToDb, orderBy = "create
     const nextIds = new Set(next.map((x) => x.id));
 
     const toDelete = prev.filter((x) => !nextIds.has(x.id));
-    await Promise.all(toDelete.map((item) => supabase.from(table).delete().eq("id", item.id)));
+    await Promise.all(toDelete.map(async (item) => {
+      const { error } = await supabase.from(table).delete().eq("id", item.id);
+      if (error) notifyError(table, error.message);
+    }));
+
+    let hadError = false;
 
     for (const item of next) {
       const isNew = !prevIds.has(item.id);
       const prevItem = prev.find((p) => p.id === item.id);
       const changed = isNew || JSON.stringify(prevItem) !== JSON.stringify(item);
       if (!changed) continue;
+
       const row = mapToDb(item);
+
       if (isNew) {
-        const { id, ...rest } = row;
-        const { data: inserted, error } = await supabase.from(table).insert({ ...rest, company_id: COMPANY_ID }).select().single();
-        if (!error && inserted) {
+        // Remove id from payload — let Supabase generate the real UUID
+        const { id: _id, ...rest } = row;
+        const { data: inserted, error } = await supabase
+          .from(table)
+          .insert({ ...rest, company_id: COMPANY_ID })
+          .select()
+          .single();
+
+        if (error) {
+          hadError = true;
+          notifyError(table, error.message);
+        } else if (inserted) {
           const fresh = mapToJs(inserted);
           setData((cur) => cur.map((x) => (x.id === item.id ? fresh : x)));
           prevRef.current = prevRef.current.map((x) => (x.id === item.id ? fresh : x));
         }
       } else {
-        await supabase.from(table).update(row).eq("id", item.id);
+        const { error } = await supabase.from(table).update(row).eq("id", item.id);
+        if (error) {
+          hadError = true;
+          notifyError(table, error.message);
+        }
       }
     }
-  }, [table, mapToDb, mapToJs]);
+
+    // If any write failed, refetch from DB so local state matches reality
+    if (hadError) fetchAll();
+  }, [table, mapToDb, mapToJs, fetchAll]);
 
   return [data, setSynced, ready];
 }
@@ -124,6 +156,8 @@ export function useClientsWithVehicles() {
     // clientes removidos (as linhas de veículo somem juntas via cascade no banco)
     await Promise.all(prev.filter((c) => !nextIds.has(c.id)).map((c) => supabase.from("clients").delete().eq("id", c.id)));
 
+    let hadError = false;
+
     for (const client of next) {
       const isNewClient = !prevIds.has(client.id);
       const prevClient = prev.find((p) => p.id === client.id);
@@ -134,9 +168,11 @@ export function useClientsWithVehicles() {
 
       if (isNewClient) {
         const { data: inserted, error } = await supabase.from("clients").insert({ ...clientRow, company_id: COMPANY_ID }).select().single();
-        if (!error && inserted) realClientId = inserted.id;
+        if (error) { hadError = true; notifyError("clients", error.message); }
+        else if (inserted) realClientId = inserted.id;
       } else if (clientChanged) {
-        await supabase.from("clients").update(clientRow).eq("id", client.id);
+        const { error } = await supabase.from("clients").update(clientRow).eq("id", client.id);
+        if (error) { hadError = true; notifyError("clients", error.message); }
       }
 
       // veículos deste cliente
@@ -152,13 +188,17 @@ export function useClientsWithVehicles() {
         if (!vChanged) continue;
         const vRow = { brand: v.brand, model: v.model, year: v.year || null, color: v.color, plate: v.plate, km: v.km || 0, notes: v.notes };
         if (isNewV) {
-          await supabase.from("vehicles").insert({ ...vRow, client_id: realClientId, company_id: COMPANY_ID });
+          const { error } = await supabase.from("vehicles").insert({ ...vRow, client_id: realClientId, company_id: COMPANY_ID });
+          if (error) { hadError = true; notifyError("vehicles", error.message); }
         } else {
-          await supabase.from("vehicles").update(vRow).eq("id", v.id);
+          const { error } = await supabase.from("vehicles").update(vRow).eq("id", v.id);
+          if (error) { hadError = true; notifyError("vehicles", error.message); }
         }
       }
     }
-    if (next.some((c, i) => !prevIds.has(c.id))) fetchAll(); // garante que os ids reais (do banco) voltem pra tela
+
+    if (hadError) fetchAll();
+    else if (next.some((c) => !prevIds.has(c.id))) fetchAll(); // garante ids reais do banco
   }, [fetchAll]);
 
   return [clients, setSynced, ready];

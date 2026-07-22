@@ -588,19 +588,20 @@ function WeekView({ appointments, currentDate, dragId, setDragId, moveTo, openEd
             <div key={h} className="flex" style={{ minHeight: 48 }}>
               <div className="w-16 flex items-center justify-center text-xs text-muted-foreground border-r border-border">{h}:00</div>
               {days.map((d, i) => {
-                const iso  = d.toISOString().slice(0, 10);
-                const appt = appointments.find((a: any) => a.date === iso && parseInt(a.time) === h);
+                const iso   = d.toISOString().slice(0, 10);
+                const appts = appointments.filter((a: any) => a.date === iso && parseInt(a.time) === h);
                 return (
-                  <div key={i} className="flex-1 border-l border-border p-1" onDragOver={(e) => e.preventDefault()} onDrop={() => moveTo(h, iso)}>
-                    {appt && (
+                  <div key={i} className="flex-1 border-l border-border p-1 space-y-0.5" onDragOver={(e) => e.preventDefault()} onDrop={() => moveTo(h, iso)}>
+                    {appts.map((appt: any) => (
                       <div
+                        key={appt.id}
                         draggable onDragStart={() => setDragId(appt.id)} onClick={() => openEdit(appt)}
                         className="p-1.5 rounded cursor-move text-xs truncate"
                         style={{ background: STATUS_COLOR[appt.status], color: "#fff" }}
                       >
                         {appt.clientName}
                       </div>
-                    )}
+                    ))}
                   </div>
                 );
               })}
