@@ -211,7 +211,7 @@ export function OrdensServico({ orders, setOrders, clients, services, employees,
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted-foreground">{o.code || o.id}</span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(o.createdAt + "T00:00").toLocaleDateString("pt-BR", {
+                        {new Date(o.createdAt?.length === 10 ? o.createdAt + "T00:00" : o.createdAt).toLocaleDateString("pt-BR", {
                           day: "2-digit",
                           month: "short",
                         })}

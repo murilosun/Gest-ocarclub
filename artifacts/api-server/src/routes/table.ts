@@ -40,19 +40,23 @@ router.post("/:t", requireAuth, async (req, res) => {
   const { t } = req.params;
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
-  const body = req.body as Record<string, unknown>;
-  // Remove id so DB generates it; attach company_id from session
-  const { id: _id, company_id: _cid, ...fields } = body;
-  const keys   = Object.keys(fields);
-  const values = Object.values(fields);
-  const cols   = ["company_id", ...keys].join(", ");
-  const placeholders = ["$1", ...keys.map((_, i) => `$${i + 2}`)].join(", ");
+  try {
+    const body = req.body as Record<string, unknown>;
+    // Remove id so DB generates it; attach company_id from session
+    const { id: _id, company_id: _cid, ...fields } = body;
+    const keys   = Object.keys(fields);
+    const values = Object.values(fields);
+    const cols   = ["company_id", ...keys].join(", ");
+    const placeholders = ["$1", ...keys.map((_, i) => `$${i + 2}`)].join(", ");
 
-  const { rows } = await pool.query(
-    `INSERT INTO ${t} (${cols}) VALUES (${placeholders}) RETURNING *`,
-    [req.session.companyId, ...values],
-  );
-  res.status(201).json(rows[0]);
+    const { rows } = await pool.query(
+      `INSERT INTO ${t} (${cols}) VALUES (${placeholders}) RETURNING *`,
+      [req.session.companyId, ...values],
+    );
+    res.status(201).json(rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message ?? "Erro interno ao salvar" });
+  }
 });
 
 // ── PUT /api/table/:t/:id ────────────────────────────────────
@@ -60,18 +64,22 @@ router.put("/:t/:id", requireAuth, async (req, res) => {
   const { t, id } = req.params;
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
-  const body = req.body as Record<string, unknown>;
-  const { id: _id, company_id: _cid, ...fields } = body;
-  const keys   = Object.keys(fields);
-  const values = Object.values(fields);
-  const setClause = keys.map((k, i) => `${k} = $${i + 3}`).join(", ");
+  try {
+    const body = req.body as Record<string, unknown>;
+    const { id: _id, company_id: _cid, ...fields } = body;
+    const keys   = Object.keys(fields);
+    const values = Object.values(fields);
+    const setClause = keys.map((k, i) => `${k} = $${i + 3}`).join(", ");
 
-  const { rows } = await pool.query(
-    `UPDATE ${t} SET ${setClause} WHERE id = $1 AND company_id = $2 RETURNING *`,
-    [id, req.session.companyId, ...values],
-  );
-  if (rows.length === 0) { res.status(404).json({ error: "Não encontrado" }); return; }
-  res.json(rows[0]);
+    const { rows } = await pool.query(
+      `UPDATE ${t} SET ${setClause} WHERE id = $1 AND company_id = $2 RETURNING *`,
+      [id, req.session.companyId, ...values],
+    );
+    if (rows.length === 0) { res.status(404).json({ error: "Não encontrado" }); return; }
+    res.json(rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message ?? "Erro interno ao atualizar" });
+  }
 });
 
 // ── DELETE /api/table/:t/:id ─────────────────────────────────
@@ -79,11 +87,15 @@ router.delete("/:t/:id", requireAuth, async (req, res) => {
   const { t, id } = req.params;
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
-  await pool.query(
-    `DELETE FROM ${t} WHERE id = $1 AND company_id = $2`,
-    [id, req.session.companyId],
-  );
-  res.json({ ok: true });
+  try {
+    await pool.query(
+      `DELETE FROM ${t} WHERE id = $1 AND company_id = $2`,
+      [id, req.session.companyId],
+    );
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message ?? "Erro interno ao excluir" });
+  }
 });
 
 export default router;

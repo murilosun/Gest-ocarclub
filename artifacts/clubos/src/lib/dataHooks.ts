@@ -47,7 +47,9 @@ export function useApiCollection(
 
       // Delete removed items
       await Promise.all(
-        prev.filter((x) => !nextIds.has(x.id)).map((x) => apiDelete(`/table/${table}/${x.id}`)),
+        prev.filter((x) => !nextIds.has(x.id)).map(async (x) => {
+          try { await apiDelete(`/table/${table}/${x.id}`); } catch { /* ignore network errors on delete */ }
+        }),
       );
 
       // Insert / update changed items
@@ -59,19 +61,29 @@ export function useApiCollection(
 
         const row = mapToDb(item);
 
-        if (isNew) {
-          const res = await apiPost(`/table/${table}`, row);
-          if (res.ok) {
-            const created = (await res.json()) as Record<string, unknown>;
-            const fresh   = mapToJs(created);
-            setData((cur) => cur.map((x) => (x.id === item.id ? fresh : x)));
-            prevRef.current = prevRef.current.map((x) => (x.id === item.id ? fresh : x));
+        try {
+          if (isNew) {
+            const res = await apiPost(`/table/${table}`, row);
+            if (res.ok) {
+              const created = (await res.json()) as Record<string, unknown>;
+              const fresh   = mapToJs(created);
+              setData((cur) => cur.map((x) => (x.id === item.id ? fresh : x)));
+              prevRef.current = prevRef.current.map((x) => (x.id === item.id ? fresh : x));
+            } else {
+              const msg = await res.text().catch(() => `status ${res.status}`);
+              window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: `Erro ao salvar: ${msg}` } }));
+              fetchAll(); // revert optimistic update
+            }
           } else {
-            fetchAll(); // revert on error
+            const res = await apiPut(`/table/${table}/${item.id}`, row);
+            if (!res.ok) {
+              window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: "Erro ao atualizar. Tente novamente." } }));
+              fetchAll();
+            }
           }
-        } else {
-          const res = await apiPut(`/table/${table}/${item.id}`, row);
-          if (!res.ok) fetchAll();
+        } catch {
+          window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: "Erro de rede ao salvar. Tente novamente." } }));
+          fetchAll(); // revert on network error
         }
       }
     },
@@ -131,13 +143,15 @@ export function useClientsWithVehicles() {
 
       // Delete removed clients
       await Promise.all(
-        prev.filter((c) => !nextIds.has(c.id)).map((c) => apiDelete(`/clients/${c.id}`)),
+        prev.filter((c) => !nextIds.has(c.id)).map(async (c) => {
+          try { await apiDelete(`/clients/${c.id}`); } catch { /* ignore */ }
+        }),
       );
 
       for (const client of next) {
-        const isNew    = !prevIds.has(client.id);
+        const isNew      = !prevIds.has(client.id);
         const prevClient = prev.find((p) => p.id === client.id);
-        const changed  = isNew || JSON.stringify(prevClient) !== JSON.stringify(client);
+        const changed    = isNew || JSON.stringify(prevClient) !== JSON.stringify(client);
         if (!changed) continue;
 
         const payload = {
@@ -155,19 +169,29 @@ export function useClientsWithVehicles() {
           })),
         };
 
-        if (isNew) {
-          const res = await apiPost("/clients", payload);
-          if (res.ok) {
-            const created = (await res.json()) as Record<string, unknown>;
-            const fresh   = mapClient(created);
-            setClients((cur) => cur.map((x) => (x.id === client.id ? fresh : x)));
-            prevRef.current = prevRef.current.map((x) => (x.id === client.id ? fresh : x));
+        try {
+          if (isNew) {
+            const res = await apiPost("/clients", payload);
+            if (res.ok) {
+              const created = (await res.json()) as Record<string, unknown>;
+              const fresh   = mapClient(created);
+              setClients((cur) => cur.map((x) => (x.id === client.id ? fresh : x)));
+              prevRef.current = prevRef.current.map((x) => (x.id === client.id ? fresh : x));
+            } else {
+              const msg = await res.text().catch(() => `status ${res.status}`);
+              window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: `Erro ao salvar cliente: ${msg}` } }));
+              fetchAll();
+            }
           } else {
-            fetchAll();
+            const res = await apiPut(`/clients/${client.id}`, payload);
+            if (!res.ok) {
+              window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: "Erro ao atualizar cliente." } }));
+              fetchAll();
+            }
           }
-        } else {
-          const res = await apiPut(`/clients/${client.id}`, payload);
-          if (!res.ok) fetchAll();
+        } catch {
+          window.dispatchEvent(new CustomEvent("clubos:dberror", { detail: { message: "Erro de rede ao salvar cliente." } }));
+          fetchAll();
         }
       }
     },
