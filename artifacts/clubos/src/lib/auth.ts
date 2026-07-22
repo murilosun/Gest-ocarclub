@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPost } from "./apiClient";
 
+export interface AuthUser {
+  id: string;
+  companyId: string;
+  name: string;
+  role: string;
+  email: string;
+}
+
 export function useAuth() {
   // undefined = still loading; null = not logged in; object = logged in
-  const [user, setUser] = useState<null | undefined | Record<string, string>>(undefined);
+  const [user, setUser] = useState<null | undefined | AuthUser>(undefined);
 
   const loadMe = useCallback(async () => {
     try {

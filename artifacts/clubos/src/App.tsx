@@ -16,7 +16,7 @@ import { DEFAULT_BRAND } from "@/lib/utils";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Login } from "@/pages/Login";
 import { Dashboard } from "@/pages/Dashboard";
-import { Agenda } from "@/pages/Agenda";
+import { Agenda, type Appointment } from "@/pages/Agenda";
 import { Clientes } from "@/pages/Clientes";
 import { OrdensServico } from "@/pages/OrdensServico";
 import { Financeiro } from "@/pages/Financeiro";
@@ -64,7 +64,7 @@ function AuthenticatedApp({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [brand, setBrand] = useState(DEFAULT_BRAND);
 
   const [orders,       setOrders,       ordersReady]       = useApiCollection("orders",       ordersMap.toJs,       ordersMap.toDb);
-  const [appointments, setAppointments, appointmentsReady] = useApiCollection("appointments", appointmentsMap.toJs, appointmentsMap.toDb);
+  const [appointments, setAppointments, appointmentsReady] = useApiCollection<Appointment>("appointments", appointmentsMap.toJs, appointmentsMap.toDb);
   const [services,     setServices,     servicesReady]     = useApiCollection("services",     servicesMap.toJs,     servicesMap.toDb);
   const [products,     setProducts,     productsReady]     = useApiCollection("products",     productsMap.toJs,     productsMap.toDb);
   const [employees,    setEmployees,    employeesReady]    = useApiCollection("employees",    employeesMap.toJs,    employeesMap.toDb);

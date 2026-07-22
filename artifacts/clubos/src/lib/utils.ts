@@ -1,3 +1,10 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 export const DEFAULT_BRAND = {
   name: "ClubOS",
   suffix: "by Car Club",
@@ -6,6 +13,7 @@ export const DEFAULT_BRAND = {
 };
 
 export const PALETTE = {
+  accent: "#FF6A00",
   bg: "#111111",
   surface: "#1A1A1C",
   surfaceAlt: "#202022",

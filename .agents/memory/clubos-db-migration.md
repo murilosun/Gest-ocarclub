@@ -36,7 +36,7 @@ description: Supabase → Replit PostgreSQL + Express API migration details and 
 - `src/lib/auth.ts` — useAuth hook via /api/auth/me
 - `src/lib/dataHooks.ts` — useApiCollection (polls 10s) + useClientsWithVehicles + mappers
 - `src/App.tsx` — AuthenticatedApp component (data hooks only mount AFTER login)
-- `src/lib/supabaseClient.ts` — STUB, exports null; safe to ignore
+- Supabase fully removed — no `@supabase/supabase-js` dependency, no `supabaseClient` files. All data access goes through `apiClient.ts` → Express `/api` → PostgreSQL.
 
 ## DB Tables
 companies, app_users, session, clients, vehicles, services, employees, orders, appointments, products, financial

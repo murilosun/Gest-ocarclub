@@ -24,7 +24,7 @@ function guard(t: string): t is keyof typeof ALLOWED {
 
 // ── GET /api/table/:t ────────────────────────────────────────
 router.get("/:t", requireAuth, async (req, res) => {
-  const { t } = req.params;
+  const t = String(req.params.t);
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
   const order = ALLOWED[t]!;
@@ -37,7 +37,7 @@ router.get("/:t", requireAuth, async (req, res) => {
 
 // ── POST /api/table/:t ───────────────────────────────────────
 router.post("/:t", requireAuth, async (req, res) => {
-  const { t } = req.params;
+  const t = String(req.params.t);
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
   try {
@@ -61,7 +61,8 @@ router.post("/:t", requireAuth, async (req, res) => {
 
 // ── PUT /api/table/:t/:id ────────────────────────────────────
 router.put("/:t/:id", requireAuth, async (req, res) => {
-  const { t, id } = req.params;
+  const t = String(req.params.t);
+  const id = String(req.params.id);
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
   try {
@@ -84,7 +85,8 @@ router.put("/:t/:id", requireAuth, async (req, res) => {
 
 // ── DELETE /api/table/:t/:id ─────────────────────────────────
 router.delete("/:t/:id", requireAuth, async (req, res) => {
-  const { t, id } = req.params;
+  const t = String(req.params.t);
+  const id = String(req.params.id);
   if (!guard(t)) { res.status(400).json({ error: "Tabela inválida" }); return; }
 
   try {
