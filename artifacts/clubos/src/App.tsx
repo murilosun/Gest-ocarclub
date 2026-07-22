@@ -108,6 +108,9 @@ export default function App() {
               clients={clients}
               setClients={setClients}
               services={services}
+              orders={orders}
+              setOrders={setOrders}
+              employees={employees}
             />
           </Route>
           <Route path="/clientes">

@@ -177,8 +177,8 @@ export const appointmentsMap = {
   toDb: (a) => ({ client_id: a.clientId || null, client_name: a.clientName, service: a.service, price: a.price ?? null, discount: a.discount ?? null, time: a.time, date: a.date, status: a.status }),
 };
 export const servicesMap = {
-  toJs: (s) => ({ id: s.id, name: s.name, time: s.time_estimate || "", price: Number(s.price), commission: Number(s.commission) }),
-  toDb: (s) => ({ name: s.name, time_estimate: s.time, price: s.price, commission: s.commission }),
+  toJs: (s) => ({ id: s.id, name: s.name, description: s.description || "", time: s.time_estimate || "", price: Number(s.price), commission: Number(s.commission) }),
+  toDb: (s) => ({ name: s.name, description: s.description || "", time_estimate: s.time, price: s.price, commission: s.commission }),
 };
 export const productsMap = {
   toJs: (p) => ({ id: p.id, name: p.name, qty: p.qty, min: p.min_qty, unitCost: Number(p.unit_cost), supplier: p.supplier || "" }),

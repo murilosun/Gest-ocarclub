@@ -7,6 +7,8 @@ import { Modal } from "@/components/shared/Modal";
 import { Field } from "@/components/shared/Field";
 import { money, uid } from "@/lib/utils";
 
+const IC = "w-full h-10 px-3 rounded-[10px] bg-secondary border border-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50";
+
 interface ServicosProps {
   services: any[];
   setServices: (updater: any[] | ((prev: any[]) => any[])) => void;
@@ -15,21 +17,21 @@ interface ServicosProps {
 export function Servicos({ services, setServices }: ServicosProps) {
   const empty = { name: "", description: "", price: "", duration: "" };
   const [modal, setModal] = useState<null | "new" | any>(null);
-  const [form, setForm] = useState(empty);
+  const [form, setForm]   = useState(empty);
 
-  const openNew = () => { setForm(empty); setModal("new"); };
+  const openNew  = () => { setForm(empty); setModal("new"); };
   const openEdit = (s: any) => {
-    setForm({ name: s.name, description: s.description || "", price: String(s.price), duration: s.duration || "" });
+    setForm({ name: s.name, description: s.description || "", price: String(s.price), duration: s.time || s.duration || "" });
     setModal(s);
   };
 
   const save = () => {
     if (!form.name || !form.price) return;
-    const clean = { ...form, price: Number(form.price) || 0 };
+    const clean = { ...form, price: Number(form.price) || 0, time: form.duration };
     if (modal === "new") {
       setServices((prev: any[]) => [{ id: uid(), ...clean, active: true }, ...prev]);
     } else {
-      setServices((prev: any[]) => prev.map(s => s.id === modal.id ? { ...s, ...clean } : s));
+      setServices((prev: any[]) => prev.map((s) => s.id === modal.id ? { ...s, ...clean } : s));
     }
     setModal(null);
   };
@@ -51,7 +53,7 @@ export function Servicos({ services, setServices }: ServicosProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map(s => (
+          {services.map((s) => (
             <Card key={s.id} className="flex flex-col">
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
@@ -59,38 +61,71 @@ export function Servicos({ services, setServices }: ServicosProps) {
                 </div>
                 <div className="flex gap-1">
                   <IconBtn icon={PenIcon} title="Editar" onClick={() => openEdit(s)} />
-                  <IconBtn icon={Trash2} title="Excluir" onClick={() => setServices((prev: any[]) => prev.filter(x => x.id !== s.id))} />
+                  <IconBtn icon={Trash2} title="Excluir" onClick={() => setServices((prev: any[]) => prev.filter((x) => x.id !== s.id))} />
                 </div>
               </div>
               <h3 className="font-semibold text-foreground mb-1">{s.name}</h3>
               {s.description && <p className="text-xs text-muted-foreground mb-3 flex-1">{s.description}</p>}
               <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
                 <span className="text-xl font-bold text-primary">{money(s.price)}</span>
-                {s.duration && <span className="text-xs text-muted-foreground">{s.duration}</span>}
+                {(s.time || s.duration) && (
+                  <span className="text-xs text-muted-foreground">{s.time || s.duration}</span>
+                )}
               </div>
             </Card>
           ))}
         </div>
       )}
 
+      {/* ── Modal Novo / Editar Serviço ─────────────────────── */}
       {modal && (
         <Modal
           title={modal === "new" ? "Novo Serviço" : "Editar Serviço"}
           onClose={() => setModal(null)}
-          footer={<PrimaryButton onClick={save}>{modal === "new" ? "Salvar serviço" : "Salvar alterações"}</PrimaryButton>}
+          footer={
+            <PrimaryButton onClick={save}>
+              {modal === "new" ? "Salvar serviço" : "Salvar alterações"}
+            </PrimaryButton>
+          }
         >
           <Field label="Nome do serviço">
-            <input className="w-full" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Ex: Polimento Técnico"
+              className={IC}
+            />
           </Field>
+
           <Field label="Descrição (opcional)">
-            <textarea className="w-full min-h-[80px] resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+            <textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Descreva o serviço brevemente…"
+              className="w-full px-3 py-2.5 rounded-[10px] bg-secondary border border-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            />
           </Field>
+
           <div className="grid grid-cols-2 gap-4">
             <Field label="Preço (R$)">
-              <input type="number" className="w-full" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                placeholder="0,00"
+                className={IC}
+              />
             </Field>
-            <Field label="Duração (ex: 2h)">
-              <input className="w-full" value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} />
+            <Field label="Duração (ex: 2h, 1h30m)">
+              <input
+                value={form.duration}
+                onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                placeholder="Ex: 1h30m"
+                className={IC}
+              />
             </Field>
           </div>
         </Modal>
