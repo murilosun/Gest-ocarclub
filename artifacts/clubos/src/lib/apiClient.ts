@@ -2,20 +2,21 @@
 
 const BASE = "/api";
 
-async function req(method: string, path: string, body?: unknown) {
+async function req(method: string, path: string, body?: unknown, init?: RequestInit) {
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: "include",
     headers: body !== undefined ? { "Content-Type": "application/json" } : {},
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    ...init,
   });
   return res;
 }
 
-export const apiGet    = (path: string)                      => req("GET",    path);
-export const apiPost   = (path: string, body: unknown)       => req("POST",   path, body);
-export const apiPut    = (path: string, body: unknown)       => req("PUT",    path, body);
-export const apiDelete = (path: string)                      => req("DELETE", path);
+export const apiGet    = (path: string, init?: RequestInit) => req("GET",    path, undefined, init);
+export const apiPost   = (path: string, body: unknown)      => req("POST",   path, body);
+export const apiPut    = (path: string, body: unknown)      => req("PUT",    path, body);
+export const apiDelete = (path: string)                     => req("DELETE", path);
 
 /** Convenience: fetch JSON or throw */
 export async function apiJson<T = unknown>(path: string): Promise<T> {
