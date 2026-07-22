@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "ClubOS"
+version = "1.0.0"
+id = "artifacts/clubos"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19285
+
+[services.development]
+run = "pnpm --filter @workspace/clubos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/clubos", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/clubos/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19285"
+BASE_PATH = "/"
