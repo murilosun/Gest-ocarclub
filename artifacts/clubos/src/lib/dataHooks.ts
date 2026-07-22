@@ -206,11 +206,13 @@ export function useClientsWithVehicles() {
    ========================================================================= */
 export const ordersMap = {
   toJs: (o: Record<string, unknown>) => ({ id: o.id, code: o.code, clientId: o.client_id, clientName: o.client_name, vehicleLabel: o.vehicle_label, serviceName: o.service_name, value: Number(o.value), discount: Number(o.discount), tech: o.tech ?? "", notes: o.notes ?? "", status: o.status, createdAt: o.created_at }),
-  toDb: (o: Record<string, unknown>) => ({ code: o.code, client_id: o.clientId ?? null, client_name: o.clientName, vehicle_label: o.vehicleLabel, service_name: o.serviceName, value: o.value, discount: o.discount, tech: o.tech, notes: o.notes, status: o.status, created_at: o.createdAt }),
+  // client_id must be null (not empty string) — PostgreSQL rejects "" for uuid columns
+  toDb: (o: Record<string, unknown>) => ({ code: o.code, client_id: (o.clientId as string) || null, client_name: o.clientName, vehicle_label: o.vehicleLabel, service_name: o.serviceName, value: o.value, discount: o.discount, tech: o.tech, notes: o.notes, status: o.status, created_at: o.createdAt }),
 };
 export const appointmentsMap = {
   toJs: (a: Record<string, unknown>) => ({ id: a.id, clientId: a.client_id ?? "", clientName: a.client_name, service: a.service, price: a.price != null ? Number(a.price) : undefined, discount: a.discount != null ? Number(a.discount) : undefined, time: a.time, date: a.date, status: a.status }),
-  toDb: (a: Record<string, unknown>) => ({ client_id: a.clientId ?? null, client_name: a.clientName, service: a.service, price: a.price ?? null, discount: a.discount ?? null, time: a.time, date: a.date, status: a.status }),
+  // client_id must be null (not empty string) when unset — PostgreSQL rejects "" for uuid columns
+  toDb: (a: Record<string, unknown>) => ({ client_id: (a.clientId as string) || null, client_name: a.clientName, service: a.service, price: a.price ?? null, discount: a.discount ?? null, time: a.time, date: a.date, status: a.status }),
 };
 export const servicesMap = {
   toJs: (s: Record<string, unknown>) => ({ id: s.id, name: s.name, description: s.description ?? "", time: s.time_estimate ?? "", price: Number(s.price), commission: Number(s.commission) }),

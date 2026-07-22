@@ -37,7 +37,7 @@ export const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export const money = (n: number) => (Number(n) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+export const uid = () => crypto.randomUUID();
 
 export const onlyDigits = (s: string) => (s || "").replace(/\D/g, "");
 
