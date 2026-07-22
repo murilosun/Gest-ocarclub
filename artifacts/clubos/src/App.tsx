@@ -102,7 +102,13 @@ export default function App() {
             />
           </Route>
           <Route path="/agenda">
-            <Agenda appointments={appointments} setAppointments={setAppointments} clients={clients} />
+            <Agenda
+              appointments={appointments}
+              setAppointments={setAppointments}
+              clients={clients}
+              setClients={setClients}
+              services={services}
+            />
           </Route>
           <Route path="/clientes">
             <Clientes clients={clients} setClients={setClients} orders={orders} />

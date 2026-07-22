@@ -173,8 +173,8 @@ export const ordersMap = {
   toDb: (o) => ({ code: o.code, client_id: o.clientId || null, client_name: o.clientName, vehicle_label: o.vehicleLabel, service_name: o.serviceName, value: o.value, discount: o.discount, tech: o.tech, notes: o.notes, status: o.status, created_at: o.createdAt }),
 };
 export const appointmentsMap = {
-  toJs: (a) => ({ id: a.id, clientName: a.client_name, service: a.service, time: a.time, date: a.date, status: a.status }),
-  toDb: (a) => ({ client_name: a.clientName, service: a.service, time: a.time, date: a.date, status: a.status }),
+  toJs: (a) => ({ id: a.id, clientId: a.client_id || "", clientName: a.client_name, service: a.service, price: a.price != null ? Number(a.price) : undefined, discount: a.discount != null ? Number(a.discount) : undefined, time: a.time, date: a.date, status: a.status }),
+  toDb: (a) => ({ client_id: a.clientId || null, client_name: a.clientName, service: a.service, price: a.price ?? null, discount: a.discount ?? null, time: a.time, date: a.date, status: a.status }),
 };
 export const servicesMap = {
   toJs: (s) => ({ id: s.id, name: s.name, time: s.time_estimate || "", price: Number(s.price), commission: Number(s.commission) }),
